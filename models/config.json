@@ -1,0 +1,8 @@
+{
+  "data_path": "/content/drive/MyDrive/restaurant_sales_data.csv",
+  "forecast_horizon": 10,
+  "min_weeks": 20,
+  "test_ratio": 0.2,
+  "optuna_trials": 50,
+  "random_state": 42
+}
