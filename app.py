@@ -276,10 +276,10 @@ def forecast_restaurant(restaurant_id, horizon, weekly,
         for t in targets:
             for ln in [1,2,4,8]:  row[f'{t}_lag_{ln}w'] = lag(t, ln)
             for w  in [4,8,12]:   row[f'{t}_roll{w}w']  = roll(t, w)
-            row[f'{t}_std4w']  = float(extended[t].tail(4).std()) if t in extended.columns else 0.0
+            row[f'{t}_std4w'] = float(extended[t].tail(4).std()) if t in extended.columns and len(extended[t].tail(4)) > 1 else 0.0
             row[f'{t}_trend']  = lag(t,1) - lag(t,4)
             row[f'{t}_lag_52w'] = float(extended[t].iloc[-52]) if len(extended)>=52 and t in extended.columns else lag(t,1)
-            row[f'restaurant_mean_{t}'] = float(extended[t].mean()) if t in extended.columns else 0.0
+            row[f'restaurant_mean_{t}'] = float(extended[t].mean()) if t in extended.columns and len(extended[t]) > 0 else 0.0
 
         row.update({
             'sold_lag_1w': lag('total_sold',1), 'sold_lag_4w': lag('total_sold',4),
@@ -300,8 +300,8 @@ def forecast_restaurant(restaurant_id, horizon, weekly,
 
         for t in targets:
             sh = shifts[t]
-            pl = float(np.expm1(models[t]['lgbm'].predict(X_new)) - sh)
-            pr = float(np.expm1(models[t]['rf'].predict(X_new))   - sh)
+            p_lgbm = (np.expm1(models[target]['lgbm'].predict(X_new)) - sh).item()
+            p_rf   = (np.expm1(models[target]['rf'].predict(X_new))   - sh).item()
             pe = (pl + pr) / 2
             sr[t] = round(pe,2); sr[f'{t}_lgbm'] = round(pl,2)
             sr[f'{t}_rf'] = round(pr,2); sr[f'{t}_std'] = round(abs(pl-pr)/2,2)
