@@ -295,13 +295,17 @@ def forecast_restaurant(restaurant_id, horizon, weekly,
             if col.startswith('restaurant_type_') and col not in row:
                 row[col] = int(hist[col].iloc[-1]) if col in hist.columns else 0
 
-        X_new = pd.Series(row).reindex(feature_cols).fillna(0).values.reshape(1,-1)
+        X_new = pd.DataFrame(
+            [pd.Series(row).reindex(feature_cols).fillna(0.0).astype(float)],
+            columns=feature_cols
+        )
+        X_values = X_new.values
         sr = {'week_start': next_week}
 
         for t in targets:
             sh = shifts[t]
-            p_lgbm = (np.expm1(models[target]['lgbm'].predict(X_new)) - sh).item()
-            p_rf   = (np.expm1(models[target]['rf'].predict(X_new))   - sh).item()
+            pl = float(np.expm1(models[t]['lgbm'].predict(X_new))[0] - sh)
+            pr = float(np.expm1(models[t]['rf'].predict(X_values))[0] - sh)
             pe = (pl + pr) / 2
             sr[t] = round(pe,2); sr[f'{t}_lgbm'] = round(pl,2)
             sr[f'{t}_rf'] = round(pr,2); sr[f'{t}_std'] = round(abs(pl-pr)/2,2)
